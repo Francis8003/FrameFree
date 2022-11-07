@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class MonoBase : MonoBehaviour
+public abstract class MonoBase : MonoBehaviour
 {
-
+    public abstract void ProcessEvent(MsgBase msg);
 }

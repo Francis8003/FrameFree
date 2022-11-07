@@ -56,31 +56,92 @@ public class ManagerBase : MonoBase
             tmp.next = node;
         }
     }
+    /// <summary>
+    /// 注销多个消息
+    /// </summary>
+    /// <param name="mono"></param>
+    /// <param name="msgs"></param>
+    public void UnRegistMsg(MonoBase mono, params ushort[] msgs)
+    {
+        for (int i = 0; i < msgs.Length; i++)
+        {
+            UnRegistMsg(msgs[i], mono);
+        }
+    }
 
-
-    public void unRegistMsg(ushort id, MonoBase node)
+    /// <summary>
+    /// 注销一个消息节点
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="node"></param>
+    public void UnRegistMsg(ushort id, MonoBase node)
     {
         if (!eventTree.ContainsKey(id))
         {
             Debug.LogWarning("not contain id==" + id);
             return;
         }
-        else
+        else//存在这个消息
         {
             EventNode tmp = eventTree[id];
+            //要注销的节点是第一个节点
             if (node == tmp.data)
             {
                 EventNode header = tmp;
-                if (tmp.next == null)
-                {
 
+                //除了第一个节点后边还有消息
+                if (header.next != null)
+                {
+                    header.data = tmp.next.data;
+                    header.next = tmp.next.next;
                 }
+                //只有第一个节点
                 else
                 {
-
+                    eventTree.Remove(id);
+                }
+            }
+            else//要注销的节点是中间或者尾部的消息 
+            {
+                while (tmp.next != null && tmp.next.data != null)//TBD
+                {
+                    tmp = tmp.next;
+                }
+                //去掉中间的节点
+                if (tmp.next.next != null)
+                {
+                    tmp.next = tmp.next.next;
+                }
+                //去掉尾部的节点
+                else
+                {
+                    tmp.next = null;
                 }
             }
         }
 
     }
+    /// <summary>
+    /// 处理整个消息队列
+    /// </summary>
+    /// <param name="msg"></param>
+    public override void ProcessEvent(MsgBase msg)
+    {
+        if (!eventTree.ContainsKey(msg.msgID))
+        {
+            Debug.LogError("msg id " + msg.msgID + " not exsits");
+            Debug.LogError("msg Manager ==" + msg.GetManager());
+        }
+        else
+        {
+            EventNode tmp = eventTree[msg.msgID];
+            do
+            {
+                tmp.data.ProcessEvent(msg);
+                tmp = tmp.next;
+            } while (tmp != null);
+
+        }
+    }
+
 }
